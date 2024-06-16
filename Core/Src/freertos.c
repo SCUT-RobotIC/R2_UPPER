@@ -59,11 +59,13 @@
 double ReductionRatio3508=3591/187;
 double ReductionRatoiGear=143/58;
 double ElecExac3508=8191/360;
-
 double LowAng,HighAng;
+
+extern int angtemp[4];
+extern int flagf[4];
+extern int dir[4];
+extern int ang[4];
 extern int condition[10];
-int buff_len;
-char TransmitBuffer[100];
 extern motor_measure_t   *motor_data[8];
 extern motor_measure_t   *motor_data1[8];
 extern TGT_COOR TC;
@@ -71,35 +73,37 @@ extern REAL_COOR RC;
 extern ang_dir MotorSignal[4];
 extern PhotogateAng ANGs;
 extern PhotogateSpd Spds;
+extern double Vx,Vy,omega;
+extern int swich[4];
+extern int receivefactor[4];
+extern DataPacket DataRe;
+extern int16_t lx,ly,rx,ry,lp,rp;
+extern uint8_t B1,B2;
+extern uint8_t Cal_Parity;
+
 typedef struct __FILE FILE;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-extern int angtemp[4];
-extern int flagf[4];
-extern double Vx,Vy,omega;
-extern int swich[4];
-int statue[10]={0};
-extern int receivefactor[4];
-int factor[100]={0};
 
+int actionFlag[10];
+int statue[10]={0};
+int factor[100]={0};
 int conditionCounter[10];
 int conditionFlag[10];
 int flag=0;
 int flag1=0;
 
-extern int dir[4];
-extern int ang[4];
+int buff_len;
+char TransmitBuffer[100];
+
 
 
 extern double theta[4];
 
-extern DataPacket DataRe;
-extern int16_t lx,ly,rx,ry,lp,rp;
-extern uint8_t B1,B2;
-extern uint8_t Cal_Parity;
+
 	
 int i[10];
 /* USER CODE END PD */
@@ -163,13 +167,13 @@ void throw_ball(){
 		Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
 		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
-		vTaskDelay(500);
+		vTaskDelay(700);
 		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
-		vTaskDelay(500);
+		vTaskDelay(200);
 		rtU.yaw_target_CH1_7= 120*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
-		vTaskDelay(1500);
+		vTaskDelay(1300);
 		rtU.yaw_target_CH1_7= 0*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 }
 
@@ -177,7 +181,7 @@ void put_ball(){
 			Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
 		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
-		vTaskDelay(500);
+		vTaskDelay(700);
 		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
 		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
@@ -517,6 +521,7 @@ void StartRiseBall(void *argument)
 			if(RC.action==1){
 			rtU.yaw_target_CH1_6=3000;//麦轮
 			rtU.yaw_target_CH1_5=9000;
+
 			}else
 			{
 		  rtU.yaw_target_CH1_6=0;//麦轮
@@ -557,12 +562,20 @@ void StartThrowball(void *argument)
 	}
 		else if(swich[1]==1)
 		{
-			if(RC.action==2){
+			if(RC.action==2&&actionFlag[2]==0){
         throw_ball();
+				actionFlag[2]=1;
 			}
-			else if(RC.action==3){
+			else if(!(RC.action==2))
+				actionFlag[2]=0;
+			
+			if(RC.action==3&&actionFlag[3]==0){
         put_ball();
+				actionFlag[3]=1;
 			}
+			else if(!(RC.action==3))
+				actionFlag[3]=0;
+			
 		}
 		
 

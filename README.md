@@ -1,2 +1,2 @@
-# R2_UPPER
-R2 receiving signal from the upper computer to move
+# R1-UPPER-
+用于R1接收上位机信号并移动到指定位置

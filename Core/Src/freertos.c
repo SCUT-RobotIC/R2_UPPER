@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * File Name          : freertos.c
-  * Description        : Code for freertos applications
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : freertos.c
+ * Description        : Code for freertos applications
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2024 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -25,26 +25,45 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
-#include "pidctl.h"
+#include "PID_MODEL.h"
 #include "arm_math.h"
 #include "bsp_can.h"
 #include "motorctrl.h"
 #include "stdio.h"
-#include "CALCULATE.h"
+#include "calculate.h"
 #include "math.h"
 #include "delay.h"
 #include "throwball.h"
 #include "solve.h"
+
+// #include "R1_Ball_MODEL.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define VEL 1
+#define ANG 2
 
-#define VEL      1
-#define ANG      2
+/**
+ * @brief motor definition
+ * motor_data[0] - motor_data[3]: chassis motors
+ * motor_data[4]: ball shooter motor
+ * motor_data[5]: ball right motor
+ * motor_data[6]: ball left motor
+ * motor_data[7]: ball lift motor
+ */
+
+#define Throwfai      106//极坐标定义舵机
+#define Throwtheta      153 
+double ReductionRatio3508=3591/187;
+double ReductionRatoiGear=143/58;
+double ElecExac3508=8191/360;
+
 double LowAng,HighAng;
 extern int condition[10];
+int buff_len;
+char TransmitBuffer[100];
 extern motor_measure_t   *motor_data[8];
 extern motor_measure_t   *motor_data1[8];
 extern TGT_COOR TC;
@@ -53,25 +72,24 @@ extern ang_dir MotorSignal[4];
 extern PhotogateAng ANGs;
 extern PhotogateSpd Spds;
 typedef struct __FILE FILE;
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-
 extern int angtemp[4];
 extern int flagf[4];
 extern double Vx,Vy,omega;
 extern int swich[4];
-
+int statue[10]={0};
 extern int receivefactor[4];
 int factor[100]={0};
 
-
-
+int conditionCounter[10];
+int conditionFlag[10];
 int flag=0;
 int flag1=0;
+
 extern int dir[4];
 extern int ang[4];
 
@@ -83,8 +101,7 @@ extern int16_t lx,ly,rx,ry,lp,rp;
 extern uint8_t B1,B2;
 extern uint8_t Cal_Parity;
 	
-int i;
-
+int i[10];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -101,47 +118,80 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow1,
 };
-/* Definitions for ThrowBall */
-osThreadId_t ThrowBallHandle;
-const osThreadAttr_t ThrowBall_attributes = {
-  .name = "ThrowBall",
+/* Definitions for cha */
+osThreadId_t chaHandle;
+const osThreadAttr_t cha_attributes = {
+  .name = "cha",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for logicchassis */
+osThreadId_t logicchassisHandle;
+const osThreadAttr_t logicchassis_attributes = {
+  .name = "logicchassis",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow7,
+};
+/* Definitions for Transmit */
+osThreadId_t TransmitHandle;
+const osThreadAttr_t Transmit_attributes = {
+  .name = "Transmit",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for Rise */
 osThreadId_t RiseHandle;
 const osThreadAttr_t Rise_attributes = {
   .name = "Rise",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal2,
+  .priority = (osPriority_t) osPriorityLow2,
 };
-/* Definitions for Chassis */
-osThreadId_t ChassisHandle;
-const osThreadAttr_t Chassis_attributes = {
-  .name = "Chassis",
+/* Definitions for Throwball */
+osThreadId_t ThrowballHandle;
+const osThreadAttr_t Throwball_attributes = {
+  .name = "Throwball",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal4,
-};
-/* Definitions for Photoate */
-osThreadId_t PhotoateHandle;
-const osThreadAttr_t Photoate_attributes = {
-  .name = "Photoate",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow7,
+  .priority = (osPriority_t) osPriorityLow3,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void throw_ball(){
+    rtU.yaw_status_CH1_7=2;	
+		Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
+		vTaskDelay(500);
+		rtU.yaw_target_CH1_7= 120*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
+		vTaskDelay(1500);
+		rtU.yaw_target_CH1_7= 0*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
+}
+
+void put_ball(){
+			Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
+
+}
 
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void Throw(void *argument);
-void RiseBall(void *argument);
-void ChassisControl(void *argument);
-void RiseBallPhotoate(void *argument);
+void chasfunc(void *argument);
+void chalogic(void *argument);
+void StartTransmit(void *argument);
+void StartRiseBall(void *argument);
+void StartThrowball(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -175,17 +225,20 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of ThrowBall */
-  ThrowBallHandle = osThreadNew(Throw, NULL, &ThrowBall_attributes);
+  /* creation of cha */
+  chaHandle = osThreadNew(chasfunc, NULL, &cha_attributes);
+
+  /* creation of logicchassis */
+  logicchassisHandle = osThreadNew(chalogic, NULL, &logicchassis_attributes);
+
+  /* creation of Transmit */
+  TransmitHandle = osThreadNew(StartTransmit, NULL, &Transmit_attributes);
 
   /* creation of Rise */
-  RiseHandle = osThreadNew(RiseBall, NULL, &Rise_attributes);
+  RiseHandle = osThreadNew(StartRiseBall, NULL, &Rise_attributes);
 
-  /* creation of Chassis */
-  ChassisHandle = osThreadNew(ChassisControl, NULL, &Chassis_attributes);
-
-  /* creation of Photoate */
-  PhotoateHandle = osThreadNew(RiseBallPhotoate, NULL, &Photoate_attributes);
+  /* creation of Throwball */
+  ThrowballHandle = osThreadNew(StartThrowball, NULL, &Throwball_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -199,121 +252,63 @@ void MX_FREERTOS_Init(void) {
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the defaultTask thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-
   /* Infinite loop */
-  for(;;)
-  {	
-		for(int i=0;i<4;i++){
+  for (;;)
+  {
+for(int i=0;i<4;i++){
 		if(ANGs.flag[i]!=1&&receivefactor[0]==1){
-				MotorSignal[i].thetas=MotorSignal[i].thetas+0.3;
+				MotorSignal[i].thetas=MotorSignal[i].thetas+0.15;
 
 		}
+		
+		
 }
-					
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_Throw */
+/* USER CODE BEGIN Header_chasfunc */
 /**
-* @brief Function implementing the ThrowBall thread.
+* @brief Function implementing the cha thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_Throw */
-void Throw(void *argument)
+/* USER CODE END Header_chasfunc */
+void chasfunc(void *argument)
 {
-  /* USER CODE BEGIN Throw */
-  /* Infinite loop */
-  for(;;)
-  {		if(condition[5]==1){//按下按键6
-		set_getball(3390);
-		movement_take();
-	}
-		if(condition[0]==1)
-		   motor_off();
-osDelay(1);
-
-  }
-
-  /* USER CODE END Throw */
-}
-
-/* USER CODE BEGIN Header_RiseBall */
-/**
-* @brief Function implementing the Rise thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_RiseBall */
-void RiseBall(void *argument)
-{
-  /* USER CODE BEGIN RiseBall */
+  /* USER CODE BEGIN chasfunc */
   /* Infinite loop */
   for(;;)
   {
+		
+if(swich[1]==0){
 
-		if(condition[1]==1){
-				rtU.yaw_target4=-3000;
-				while(1)
-					{
-if(fabs((motor_data[4]->ecd+motor_data[4]->circle*8191)-HighAng)<8191)
-{
-	osDelay(500);
-	throw_ball();
-	  rtU.yaw_target4=2000;
-
-	break;
-}
-}
-		}	
-				//	Spds.flag[5]=0;
-osDelay(1);
-  }
-  /* USER CODE END RiseBall */
-}
-
-/* USER CODE BEGIN Header_ChassisControl */
-/**
-* @brief Function implementing the Chassis thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_ChassisControl */
-void ChassisControl(void *argument)
-{
-  /* USER CODE BEGIN ChassisControl */
-  /* Infinite loop */
-  for(;;)
-  {
-
-		if(swich[1]==0){
-
-		Vx=(rx)/9;
-		Vy=(ry)/9;
-		omega=-(lx)/9;
-	if(fabs(Vx)<1000)
+		Vx=(rx)/15;
+		Vy=(ry)/15;
+		omega=(lx)/15;
+	if(fabs(Vx)<500)
 		Vx=0;
-	if(fabs(Vy)<1000)
+	if(fabs(Vy)<500)
 		Vy=0;
- if(fabs(omega)<1000)
+ if(fabs(omega)<500)
 		omega=0;
 		}			
-		else if(swich[1]==1)
+else if(swich[1]==1)
 		{
 		Vx=RC.Vx;
 		Vy=RC.Vy;
 		omega=RC.omega;	
 		}
+		
 			factor[1]++;
 		
 		if(receivefactor[0]==0)//没接收到就增加标志位
@@ -360,35 +355,30 @@ void ChassisControl(void *argument)
 		ctrlmotor( Vx,  Vy,  omega,dir[0],dir[1],dir[2],dir[3],flag1);
 		
 
-		rtU.yaw_target7=0;
-		rtU.yaw_target8    = theta[0]*36*8191*47/(17*360); 
-		rtU.yaw_target9    = theta[1]*36*8191*47/(17*360); 
-		rtU.yaw_target10   = theta[2]*36*8191*47/(17*360); 
-		rtU.yaw_target11   = theta[3]*36*8191*47/(17*360); 
-		rtU.yaw_target12=1000;
-		rtU.yaw_target13=2000;
-		rtU.yaw_target14=3000;
-		rtU.yaw_target15=4000;
+		rtU.yaw_target_CH2_1 = theta[0]*36*8191*93/(35*360); 
+		rtU.yaw_target_CH2_2 = theta[1]*36*8191*93/(35*360); 
+		rtU.yaw_target_CH2_3 = theta[2]*36*8191*93/(35*360); 
+		rtU.yaw_target_CH2_4 = theta[3]*36*8191*93/(35*360); 
+
     osDelay(1);
   }
-  /* USER CODE END ChassisControl */
+  /* USER CODE END chasfunc */
 }
 
-/* USER CODE BEGIN Header_RiseBallPhotoate */
+/* USER CODE BEGIN Header_chalogic */
 /**
-* @brief Function implementing the Photoate thread.
+* @brief Function implementing the logicchassis thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_RiseBallPhotoate */
-void RiseBallPhotoate(void *argument)
+/* USER CODE END Header_chalogic */
+void chalogic(void *argument)
 {
-  /* USER CODE BEGIN RiseBallPhotoate */
+  /* USER CODE BEGIN chalogic */
   /* Infinite loop */
   for(;;)
   {
-	
-	for(int i=0;i<4;i++){
+			for(int i=0;i<4;i++){
       if(ANGs.flag[i]==1&&flagf[i]!=1){
 						ang[i]=ang[i]+ANGs.ang[i];
 				    angtemp[i]=ANGs.ang[i];
@@ -403,11 +393,11 @@ void RiseBallPhotoate(void *argument)
 		}
 }
 
-		if((fabs(Vx)>100||fabs(Vy)>100||fabs(omega)>100)&&flagf[0]==1&&flagf[1]==1&&flagf[2]==1&&flagf[3]==1){
-		MotorSignal[0].thetan=atan2(Vy-omega*cos(atan(3.0/4.0)), Vx-omega*sin(atan(3.0/4.0)))*180/PI;
-		MotorSignal[1].thetan=atan2(Vy-omega*cos(atan(3.0/4.0)), Vx+omega*sin(atan(3.0/4.0)))*180/PI;
-		MotorSignal[2].thetan=atan2(Vy+omega*cos(atan(3.0/4.0)), Vx+omega*sin(atan(3.0/4.0)))*180/PI;			
-		MotorSignal[3].thetan=atan2(Vy+omega*cos(atan(3.0/4.0)), Vx-omega*sin(atan(3.0/4.0)))*180/PI;
+		if((fabs(Vx)>500||fabs(Vy)>500||fabs(omega)>500)&&flagf[0]==1&&flagf[1]==1&&flagf[2]==1&&flagf[3]==1){
+		MotorSignal[0].thetan=atan2(Vy-omega*cos(atan(1)), Vx-omega*sin(atan(1)))*180/PI;
+		MotorSignal[1].thetan=atan2(Vy-omega*cos(atan(1)), Vx+omega*sin(atan(1)))*180/PI;
+		MotorSignal[2].thetan=atan2(Vy+omega*cos(atan(1)), Vx+omega*sin(atan(1)))*180/PI;			
+		MotorSignal[3].thetan=atan2(Vy+omega*cos(atan(1)), Vx-omega*sin(atan(1)))*180/PI;
 
 			for(int i=0;i<4;i++){
 			if(fabs(MotorSignal[i].thetan-90)<1)
@@ -437,7 +427,148 @@ for(int i=0;i<4;i++){
 }
     osDelay(1);
   }
-  /* USER CODE END RiseBallPhotoate */
+  /* USER CODE END chalogic */
+}
+
+/* USER CODE BEGIN Header_StartTransmit */
+/**
+* @brief Function implementing the Transmit thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTransmit */
+void StartTransmit(void *argument)
+{
+  /* USER CODE BEGIN StartTransmit */
+  /* Infinite loop */
+  for(;;)
+  {
+		buff_len = sprintf(TransmitBuffer,"fg %d %d %d %d\r\n",motor_data[0]->speed_rpm,motor_data[1]->speed_rpm,motor_data[2]->speed_rpm,motor_data[3]->speed_rpm);
+		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)TransmitBuffer,buff_len);
+
+    osDelay(1);
+  }
+  /* USER CODE END StartTransmit */
+}
+
+/* USER CODE BEGIN Header_StartRiseBall */
+/**
+* @brief Function implementing the Rise thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartRiseBall */
+void StartRiseBall(void *argument)
+{
+  /* USER CODE BEGIN StartRiseBall */
+  /* Infinite loop */
+
+  for(;;)
+  {
+		if(swich[1]==0){
+		if(condition[0]==1)
+			conditionCounter[0]+=1;
+		if(condition[1]==1)
+			conditionCounter[1]+=1;
+		
+		
+		if(conditionCounter[0]>50&&conditionFlag[0]==0)
+		{
+			statue[0]=1-statue[0];
+			conditionFlag[0]=1;
+		}
+		else if(conditionCounter[0]==0){
+		conditionFlag[0]=0;
+		}
+			
+		if(statue[0]==0)
+		{
+			rtU.yaw_target_CH1_6=0;
+			rtU.yaw_target_CH1_5=0;
+		}
+		else
+		{
+			rtU.yaw_target_CH1_6=3000;//麦轮
+			rtU.yaw_target_CH1_5=9000;
+		}
+		
+		
+		
+//		if(conditionCounter[1]>100&&conditionFlag[1]==0)
+//		{
+//			statue[1]=1-statue[1];
+//			conditionFlag[1]=1;
+//		}
+//		else if(conditionCounter[1]==0){
+//		conditionFlag[1]=0;
+//		}
+//			
+//		if(statue[1]==0)
+//		{
+//			rtU.yaw_target_CH1_6=0;
+//		}
+//		else
+//		{
+//			rtU.yaw_target_CH1_6=3000;
+//		}
+		    
+	}
+		else if (swich[1]==1){
+			if(RC.action==1){
+			rtU.yaw_target_CH1_6=3000;//麦轮
+			rtU.yaw_target_CH1_5=9000;
+			}else
+			{
+		  rtU.yaw_target_CH1_6=0;//麦轮
+			rtU.yaw_target_CH1_5=0;
+			}
+		}
+osDelay(1);
+  }
+  /* USER CODE END StartRiseBall */
+}
+
+/* USER CODE BEGIN Header_StartThrowball */
+/**
+* @brief Function implementing the Throwball thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartThrowball */
+void StartThrowball(void *argument)
+{
+  /* USER CODE BEGIN StartThrowball */
+  /* Infinite loop */
+  for(;;)
+  {
+		if(swich[1]==0){
+		if(condition[2]==1)
+			conditionCounter[2]+=1;
+		if(condition[3]==1)
+			conditionCounter[3]+=1;
+		
+		if(conditionCounter[2]>100){
+        throw_ball();
+		}
+		if(conditionCounter[3]>100){
+        put_ball();
+
+		}
+	}
+		else if(swich[1]==1)
+		{
+			if(RC.action==2){
+        throw_ball();
+			}
+			else if(RC.action==3){
+        put_ball();
+			}
+		}
+		
+
+    osDelay(1);
+  }
+  /* USER CODE END StartThrowball */
 }
 
 /* Private application code --------------------------------------------------*/

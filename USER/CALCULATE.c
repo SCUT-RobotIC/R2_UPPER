@@ -63,7 +63,13 @@
 #include "CALCULATE.h"
 #include "main.h"
 #include "throwball.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "main.h"
+#include "cmsis_os.h"
 int condition[10];
+extern int conditionFlag[10];
+extern int conditionCounter[10];
 int swich[4];
 //计算校验位
 uint8_t CalculateParity(const uint8_t* data, int dataSize) {
@@ -101,19 +107,23 @@ void CAL_MESSAGE(void)
 			if((B1&0x01)==0&&(DataRe.data[BOT1]&0x01)==0x01)
 			{
 				condition[0]=1;
+	
 			}
 			else if((B1&0x01)==0x01&&(DataRe.data[BOT1]&0x01)==0)
 			{
 				condition[0]=0;//松开按键1
+				conditionCounter[0]=0;
 			}
 			
 			if((B1&0x02)==0&&(DataRe.data[BOT1]&0x02)==0x02)
 			{
 				condition[1]=1;//按下按键2
+
 			}
 			else if((B1&0x02)==0x02&&(DataRe.data[BOT1]&0x02)==0)
 			{
 				condition[1]=0;//松开按键2
+				conditionCounter[1]=0;
 			}
 			
 			if((B1&0x04)==0&&(DataRe.data[BOT1]&0x04)==0x04)
@@ -123,15 +133,17 @@ void CAL_MESSAGE(void)
 			else if((B1&0x04)==0x04&&(DataRe.data[BOT1]&0x04)==0)
 			{
 				condition[2]=0;//松开按键3
+				conditionCounter[2]=0;
 			}
 			
 			if((B1&0x08)==0&&(DataRe.data[BOT1]&0x08)==0x08)
 			{
-				//按下按键4
+				condition[3]=1;//按下按键4
 			}
 			else if((B1&0x08)==0x08&&(DataRe.data[BOT1]&0x08)==0)
 			{
-				//松开按键4
+				condition[3]=0;
+				conditionCounter[3]=0;//松开按键4
 			}
 			
 			if((B1&0x10)==0&&(DataRe.data[BOT1]&0x10)==0x10)

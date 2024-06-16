@@ -25,16 +25,18 @@
 #include "motorctrl.h"
 #include "delay.h"
 #include "throwball.h"
-extern ang_dir MotorSignal[4];
-extern PhotogateSpd Spds;
-PhotogateAng ANGs;
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-
+extern ang_dir MotorSignal[4];
+extern PhotogateSpd Spds;
+extern motor_measure_t   *motor_data[8];
+int PhoTheta[2]={90,2};
+PhotogateAng ANGs;
+int AngInit;
 /* USER CODE END 1 */
 
 /** Configure pins as
@@ -62,17 +64,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PG4 PGPin PGPin */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|KEY3_Pin|KEY4_Pin;
+  /*Configure GPIO pins : PGPin PGPin PGPin PG8 */
+  GPIO_InitStruct.Pin = KEY4_Pin|KEY_LOW_Pin|KEY3_Pin|GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = KEY_LOW_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(KEY_LOW_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = KEY1_Pin;
@@ -124,11 +120,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 	if (KEYNUM==KEY_HIGH_Pin)
 		
 	{Spds.flag[0]=1;
+		if(Spds.flag[1]!=1)
+		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[0]*19*8191*3591*143/(187*58*360);
 	delay_us(5000);
 	}
 	if (KEYNUM==KEY_LOW_Pin)
 		
 	{Spds.flag[1]=1;
+	 if(Spds.flag[0]!=1)
+		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[1]*19*8191*3591*143/(187*58*360);
 	delay_us(5000);
 	}
 }

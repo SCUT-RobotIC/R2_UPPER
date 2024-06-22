@@ -1440,12 +1440,12 @@ void PID_MODEL_step(void)
       rtb_FilterCoefficient_k;
 
     /* Saturate: '<S956>/Saturation' */
-    if (u0 > 16384.0F) {
+    if (u0 > 3000.0F) {
       /* Outport: '<Root>/yaw_SPD_OUT_CH1_7' */
-      rtY.yaw_SPD_OUT_CH1_7 = 16384.0F;
-    } else if (u0 < -16384.0F) {
+      rtY.yaw_SPD_OUT_CH1_7 = 3000.0F;
+    } else if (u0 < -3000.0F) {
       /* Outport: '<Root>/yaw_SPD_OUT_CH1_7' */
-      rtY.yaw_SPD_OUT_CH1_7 = -16384.0F;
+      rtY.yaw_SPD_OUT_CH1_7 = -3000.0F;
     } else {
       /* Outport: '<Root>/yaw_SPD_OUT_CH1_7' */
       rtY.yaw_SPD_OUT_CH1_7 = u0;
@@ -1514,10 +1514,10 @@ void PID_MODEL_step(void)
             rtDW.Integrator_DSTATE_gf) + rtb_FilterCoefficient_dy;
 
       /* Saturate: '<S1055>/Saturation' */
-      if (u0 > 16384.0F) {
-        u0 = 16384.0F;
-      } else if (u0 < -16384.0F) {
-        u0 = -16384.0F;
+      if (u0 > 3000.0F) {
+        u0 = 3000.0F;
+      } else if (u0 < -3000.0F) {
+        u0 = -3000.0F;
       }
 
       rtb_Sum_pp = rtP.TRANS_CH1_7 * u0 - rtU.yaw_speed_rpm_CH1_7;
@@ -1543,12 +1543,12 @@ void PID_MODEL_step(void)
       rtb_FilterCoefficient_e4;
 
     /* Saturate: '<S1007>/Saturation' */
-    if (u0 > 16384.0F) {
+    if (u0 > 3000.0F) {
       /* Outport: '<Root>/yaw_ANG_OUT_CH1_7' */
-      rtY.yaw_ANG_OUT_CH1_7 = 16384.0F;
-    } else if (u0 < -16384.0F) {
+      rtY.yaw_ANG_OUT_CH1_7 = 3000.0F;
+    } else if (u0 < -3000.0F) {
       /* Outport: '<Root>/yaw_ANG_OUT_CH1_7' */
-      rtY.yaw_ANG_OUT_CH1_7 = -16384.0F;
+      rtY.yaw_ANG_OUT_CH1_7 = -3000.0F;
     } else {
       /* Outport: '<Root>/yaw_ANG_OUT_CH1_7' */
       rtY.yaw_ANG_OUT_CH1_7 = u0;

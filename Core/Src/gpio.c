@@ -34,9 +34,16 @@
 extern ang_dir MotorSignal[4];
 extern PhotogateSpd Spds;
 extern motor_measure_t   *motor_data[8];
-int PhoTheta[2]={90,2};
+extern motor_measure_t   *motor_data1[8];
+
+extern double ReductionRatio3508;
+extern double ReductionRatoiGear;
+extern double ElecExac3508;
+extern double HelmInit[4];
+int PhoTheta[2]={105,5};
 PhotogateAng ANGs;
 int AngInit;
+
 /* USER CODE END 1 */
 
 /** Configure pins as
@@ -93,27 +100,57 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 {
 	if(KEYNUM==KEY1_Pin)
 	{
-		ANGs.ang[0]=(int)MotorSignal[0].thetas;
+
+		if(((motor_data1[0]->circle*8191+motor_data1[0]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[0]==0)
+		{
+			HelmInit[0]=motor_data1[0]->circle*8191+motor_data1[0]->ecd;
+		}
 		ANGs.flag[0]=1;
+		if(((motor_data1[0]->circle*8191+motor_data1[0]->ecd)<(50*36*8191*93/(35*360))))
+		{
+		ANGs.flag[0]=0;
+		}
 		delay_us(5000);
 	}
 	
 	if(KEYNUM==KEY2_Pin)
 	{
-		ANGs.ang[1]=(int)MotorSignal[1].thetas;
+		if(((motor_data1[1]->circle*8191+motor_data1[1]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[1]==0)
+		{
+			HelmInit[1]=motor_data1[1]->circle*8191+motor_data1[1]->ecd;
+		}
 		ANGs.flag[1]=1;
+				if(((motor_data1[1]->circle*8191+motor_data1[1]->ecd)<(50*36*8191*93/(35*360))))
+		{
+		ANGs.flag[1]=0;
+		}
+		
 		delay_us(5000);
 	}
 		if(KEYNUM==KEY3_Pin)
 	{
-		ANGs.ang[2]=(int)MotorSignal[2].thetas;
+		if(((motor_data1[2]->circle*8191+motor_data1[2]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[2]==0)
+		{
+			HelmInit[2]=motor_data1[2]->circle*8191+motor_data1[0]->ecd;
+		}
 		ANGs.flag[2]=1;
+				if(((motor_data1[2]->circle*8191+motor_data1[2]->ecd)<(50*36*8191*93/(35*360))))
+		{
+		ANGs.flag[2]=0;
+		}
 		delay_us(5000);
 	}
 		if(KEYNUM==KEY4_Pin)
 	{
-		ANGs.ang[3]=(int)MotorSignal[3].thetas;
+		if(((motor_data1[3]->circle*8191+motor_data1[3]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[3]==0)
+		{
+			HelmInit[3]=motor_data1[3]->circle*8191+motor_data1[3]->ecd;
+		}
 		ANGs.flag[3]=1;
+				if(((motor_data1[3]->circle*8191+motor_data1[3]->ecd)<(50*36*8191*93/(35*360))))
+		{
+		ANGs.flag[3]=0;
+		}
 		delay_us(5000);
 	}
 	
@@ -121,14 +158,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 		
 	{Spds.flag[0]=1;
 		if(Spds.flag[1]!=1)
-		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[0]*19*8191*3591*143/(187*58*360);
+		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[0]*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 	delay_us(5000);
 	}
 	if (KEYNUM==KEY_LOW_Pin)
 		
 	{Spds.flag[1]=1;
 	 if(Spds.flag[0]!=1)
-		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[1]*19*8191*3591*143/(187*58*360);
+		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[1]*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 	delay_us(5000);
 	}
 }

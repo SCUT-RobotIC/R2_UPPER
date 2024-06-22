@@ -200,7 +200,11 @@ int main(void)
   PID_Angle_A_Para_Init(1, 3 , 0.5 , 0.1 , 0.01);
   PID_Angle_S_Para_Init(1, 4 , 1.5 , 0.3 , 0.01);
   PID_Angle_A_Para_Init(1, 4 , 0.5 , 0.1 , 0.01);
-																				 
+		
+  PID_Speed_Para_Init(2, 1, 1.5 , 0.3 , 0.01);
+  PID_Speed_Para_Init(2, 2, 1.5 , 0.3 , 0.01);
+  PID_Speed_Para_Init(2, 3, 1.5 , 0.3 , 0.01);
+  PID_Speed_Para_Init(2, 4, 1.5 , 0.3 , 0.01);		
 																				 
 	PID_Angle_S_Para_Init(2, 1 , 1.5 , 0.3 , 0.01);
   PID_Angle_A_Para_Init(2, 1 , 0.5 , 0.1 , 0.01);
@@ -218,15 +222,15 @@ int main(void)
 	PID_Speed_Para_Init(1, 7, 10 , 3 , 0.01);
 	PID_Angle_S_Para_Init(1, 7 , 1.5 , 0.3 , 0.01);
   PID_Angle_A_Para_Init(1, 7 , 0.5 , 0.1 , 0.01);
-	rtP.TRANS_CH1_7 = 0.15;
-	set_mode(VEL, VEL, VEL, VEL, VEL, VEL, ANG,
-             ANG, ANG, ANG, ANG, VEL, VEL, VEL); 
+	rtP.TRANS_CH1_7 = 0.7;
+	set_mode(VEL, VEL, VEL, VEL, VEL, VEL, VEL,
+             VEL, VEL, VEL, VEL, VEL, VEL, VEL); 
   // Clamp TIM Init
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 	HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3);
-	Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//fai(极坐标表示的舵机)
+	Set_servo(&htim3, TIM_CHANNEL_1, 10, 20000, 20);//fai(极坐标表示的舵机)
 	Set_servo(&htim3, TIM_CHANNEL_2,0, 20000, 20);//theta
 //	Set_servo(&htim5, TIM_CHANNEL_3,CatchBallInit,20000,20);
   // Clamp PID Init

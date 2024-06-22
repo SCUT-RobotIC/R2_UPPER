@@ -7,19 +7,20 @@ int BrakeFlag = 0;
 int BrakeAng[4] = {0};
 double mult = 1;
 double Deadband = 500;
+int dirflag=0;
 
 void ctrlmotor(double Vx, double Vy, double omega,int dir1,int dir2,int dir3,int dir4,int flag) {
 
-//for(int i=0;i<4;i++){
-//      if(fabs((double)((int)MotorSignal[i].thetas%360-90))<1)
-//				MotorSignal[i].thetas=90+(int)MotorSignal[i].thetas/360*360;
-//			if(fabs((double)((int)MotorSignal[i].thetas%360+90))<1)
-//				MotorSignal[i].thetas=-90+(int)MotorSignal[i].thetas/360*360;
-//			if(fabs((double)((int)MotorSignal[i].thetas%360-270))<1)
-//				MotorSignal[i].thetas=270+(int)MotorSignal[i].thetas/360*360;
-//			if(fabs((double)((int)MotorSignal[i].thetas%360+270))<1)
-//				MotorSignal[i].thetas=-270+(int)MotorSignal[i].thetas/360*360;
-//}
+for(int i=0;i<4;i++){
+      if(fabs((double)((int)MotorSignal[i].thetas%360-90))<1)
+				MotorSignal[i].thetas=90+(int)MotorSignal[i].thetas/360*360;
+			if(fabs((double)((int)MotorSignal[i].thetas%360+90))<1)
+				MotorSignal[i].thetas=-90+(int)MotorSignal[i].thetas/360*360;
+			if(fabs((double)((int)MotorSignal[i].thetas%360-270))<1)
+				MotorSignal[i].thetas=270+(int)MotorSignal[i].thetas/360*360;
+			if(fabs((double)((int)MotorSignal[i].thetas%360+270))<1)
+				MotorSignal[i].thetas=-270+(int)MotorSignal[i].thetas/360*360;
+}
 	if(flag==1){
 	while(  (fabs(sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>2400)||
 		      (fabs(sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>2400)||
@@ -34,18 +35,27 @@ void ctrlmotor(double Vx, double Vy, double omega,int dir1,int dir2,int dir3,int
 			rtU.yaw_status_CH1_2=1;
 			rtU.yaw_status_CH1_3=1;
 			rtU.yaw_status_CH1_4=1;
+			if(dir1==1)
+			rtU.yaw_target_CH1_1= -sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult;
+			else
 			rtU.yaw_target_CH1_1= sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult;
+
+			if(dir2==1)	
+			rtU.yaw_target_CH1_2 =-sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult;
+			else
 			rtU.yaw_target_CH1_2 =sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult;
+
+			if(dir3==1)
+			rtU.yaw_target_CH1_3= -sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult;	
+			else
 			rtU.yaw_target_CH1_3= sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult;	
+
+			if(dir4==1)
+			rtU.yaw_target_CH1_4 =-sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult;
+			else
 			rtU.yaw_target_CH1_4 =sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult;
-	if(dir1==1)
-		rtU.yaw_target_CH1_1=-rtU.yaw_target_CH1_1;
-  if(dir2==1)
-		rtU.yaw_target_CH1_2=-rtU.yaw_target_CH1_2;
-	if(dir3==1)
-		rtU.yaw_target_CH1_3=-rtU.yaw_target_CH1_3;
-	if(dir4==1)
-		rtU.yaw_target_CH1_4=-rtU.yaw_target_CH1_4;		
+
+	
 	}
 	     else{
 
@@ -115,9 +125,17 @@ void cala_d(int i){
 			MotorSignal[i].thetas+=MotorSignal[i].err;
 			
 
-			if(((int)MotorSignal[i].thetas%360<=270&&(int)MotorSignal[i].thetas%360>=90)||((int)MotorSignal[i].thetas%360<=-90&&(int)MotorSignal[i].thetas%360>=-270)){
+//			if((dirflag==0)&&(((int)MotorSignal[i].thetas%360<=270&&(int)MotorSignal[i].thetas%360>=90)||((int)MotorSignal[i].thetas%360<=-90&&(int)MotorSignal[i].thetas%360>=-270))){
+//					MotorSignal[i].dir=1-MotorSignal[i].dir;
+//					dirflag=1;
+//				}
+//			
+			if((((int)MotorSignal[i].thetas%360<=270&&(int)MotorSignal[i].thetas%360>=90)||((int)MotorSignal[i].thetas%360<=-90&&(int)MotorSignal[i].thetas%360>=-270))){
 					MotorSignal[i].dir=1-MotorSignal[i].dir;
 				}
+//			else if(!((int)MotorSignal[i].thetas%360<=270&&(int)MotorSignal[i].thetas%360>=90)||((int)MotorSignal[i].thetas%360<=-90&&(int)MotorSignal[i].thetas%360>=-270)){
+//			dirflag=0;
+//			}
 
 }
 

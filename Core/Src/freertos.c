@@ -54,13 +54,13 @@
  * motor_data[7]: ball lift motor
  */
 
-#define Throwfai      106//极坐标定义舵机
-#define Throwtheta      153 
+#define Throwfai        100//极坐标定义舵机
+#define Throwtheta      115 
 double ReductionRatio3508=3591/187;
 double ReductionRatoiGear=143/58;
 double ElecExac3508=8191/360;
 double LowAng,HighAng;
-
+extern int AngInit;
 extern int angtemp[4];
 extern int flagf[4];
 extern int dir[4];
@@ -93,12 +93,14 @@ int statue[10]={0};
 int factor[100]={0};
 int conditionCounter[10];
 int conditionFlag[10];
+int AngInitFlag;
 int flag=0;
 int flag1=0;
 
 int buff_len;
 char TransmitBuffer[100];
 
+double HelmInit[4]={0};
 
 
 extern double theta[4];
@@ -163,29 +165,42 @@ const osThreadAttr_t Throwball_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void throw_ball(){
+	if(AngInit!=0){
     rtU.yaw_status_CH1_7=2;	
-		Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
-		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
-		vTaskDelay(700);
-		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
-		vTaskDelay(200);
-		rtU.yaw_target_CH1_7= 120*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_1, 10, 20000, 20);//抬起
+		vTaskDelay(500);
+		for(int i=0;i<110;i++){
+		rtU.yaw_target_CH1_7= i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508+AngInit;
+		vTaskDelay(3);
+		}
+		Set_servo(&htim3, TIM_CHANNEL_1, 0, 20000, 20);//抬起
+		vTaskDelay(200);
 		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
 		vTaskDelay(1300);
-		rtU.yaw_target_CH1_7= 0*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
+	  Set_servo(&htim3, TIM_CHANNEL_1, 10, 20000, 20);//抬起
+		vTaskDelay(200);
+		for(int i=110;i>0;i--){
+		rtU.yaw_target_CH1_7= i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508+AngInit;
+		vTaskDelay(3);
+			
+		}
+		Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);
+		
+	}
 }
 
 void put_ball(){
-			Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);//放下
-		vTaskDelay(500);
+		if(AngInit!=0){
 		Set_servo(&htim3, TIM_CHANNEL_2, Throwtheta, 20000, 20);//夹住
-		vTaskDelay(700);
-		Set_servo(&htim3, TIM_CHANNEL_1, 3, 20000, 20);//抬起
+		vTaskDelay(500);
+		Set_servo(&htim3, TIM_CHANNEL_1, 0, 20000, 20);//抬起
 		vTaskDelay(500);
 		Set_servo(&htim3, TIM_CHANNEL_2, 0, 20000, 20);//撒手
-
+		vTaskDelay(2000);
+		Set_servo(&htim3, TIM_CHANNEL_1, Throwfai, 20000, 20);
+		}
 }
 
 /* USER CODE END FunctionPrototypes */
@@ -267,14 +282,44 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for (;;)
   {
-for(int i=0;i<4;i++){
-		if(ANGs.flag[i]!=1&&receivefactor[0]==1){
-				MotorSignal[i].thetas=MotorSignal[i].thetas+0.15;
 
+				if(HelmInit[0]==0)
+			rtU.yaw_target_CH2_1=5000;
+				if(HelmInit[1]==0)
+			rtU.yaw_target_CH2_2=5000;
+				if(HelmInit[2]==0)
+			rtU.yaw_target_CH2_3=5000;
+				if(HelmInit[3]==0)
+			rtU.yaw_target_CH2_4=5000;
+		
+	
+		
+		
+		if(AngInit==0)
+		{
+			rtU.yaw_target_CH1_7=-1000;
+		}
+		if(AngInitFlag==0&&!(AngInit==0))
+		{
+			AngInitFlag=1;
+			Set_servo(&htim3, TIM_CHANNEL_1, 100, 20000, 20);//fai(极坐标表示的舵机)
+			rtU.yaw_status_CH1_7=2;
+			
+			if(AngInit>0)
+				{
+		for(int i=0;i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508<AngInit;i++)
+					{
+		      rtU.yaw_target_CH1_7= i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
+		      vTaskDelay(100);
+				  }
+			 }
+				else if(AngInit<0)
+				{
+         rtU.yaw_target_CH1_7=AngInit;
+			 }
 		}
 		
-		
-}
+
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
@@ -358,12 +403,23 @@ else if(swich[1]==1)
 
 		ctrlmotor( Vx,  Vy,  omega,dir[0],dir[1],dir[2],dir[3],flag1);
 		
-
-		rtU.yaw_target_CH2_1 = theta[0]*36*8191*93/(35*360); 
-		rtU.yaw_target_CH2_2 = theta[1]*36*8191*93/(35*360); 
-		rtU.yaw_target_CH2_3 = theta[2]*36*8191*93/(35*360); 
-		rtU.yaw_target_CH2_4 = theta[3]*36*8191*93/(35*360); 
-
+if(HelmInit[0]!=0)
+{
+	rtU.yaw_status_CH2_1=2;
+		rtU.yaw_target_CH2_1 = MotorSignal[0].thetas*36*8191*93/(35*360)+HelmInit[0]; 
+}
+if(HelmInit[1]!=0) {    
+	rtU.yaw_status_CH2_2=2;	
+		rtU.yaw_target_CH2_2 = MotorSignal[1].thetas*36*8191*93/(35*360)+HelmInit[1]; 
+}
+if(HelmInit[2]!=0)  {
+	rtU.yaw_status_CH2_3=2;	
+		rtU.yaw_target_CH2_3 = MotorSignal[2].thetas*36*8191*93/(35*360)+HelmInit[2]; 
+}
+if(HelmInit[3]!=0) {
+	rtU.yaw_status_CH2_4=2;	
+		rtU.yaw_target_CH2_4 =MotorSignal[3].thetas *36*8191*93/(35*360)+HelmInit[3]; 
+}
     osDelay(1);
   }
   /* USER CODE END chasfunc */
@@ -382,22 +438,8 @@ void chalogic(void *argument)
   /* Infinite loop */
   for(;;)
   {
-			for(int i=0;i<4;i++){
-      if(ANGs.flag[i]==1&&flagf[i]!=1){
-						ang[i]=ang[i]+ANGs.ang[i];
-				    angtemp[i]=ANGs.ang[i];
-						MotorSignal[i].thetas=0;
-				    flagf[i]=1;
-			}
-		if(flagf[i]==1&&angtemp[i]<50)
-		{
-			ANGs.flag[i]=0;
-			ANGs.ang[i]=0;
-			flagf[i]=0;
-		}
-}
 
-		if((fabs(Vx)>500||fabs(Vy)>500||fabs(omega)>500)&&flagf[0]==1&&flagf[1]==1&&flagf[2]==1&&flagf[3]==1){
+		if((fabs(Vx)>500||fabs(Vy)>500||fabs(omega)>500)&&HelmInit[0]!=0&&HelmInit[1]!=0&&HelmInit[2]!=0&&HelmInit[3]!=0){
 		MotorSignal[0].thetan=atan2(Vy-omega*cos(atan(1)), Vx-omega*sin(atan(1)))*180/PI;
 		MotorSignal[1].thetan=atan2(Vy-omega*cos(atan(1)), Vx+omega*sin(atan(1)))*180/PI;
 		MotorSignal[2].thetan=atan2(Vy+omega*cos(atan(1)), Vx+omega*sin(atan(1)))*180/PI;			
@@ -410,8 +452,7 @@ void chalogic(void *argument)
 				MotorSignal[i].thetan=-89;}
 			
 			flag1=1;
-		}else if (flagf[0]==1&&flagf[1]==1&&flagf[2]==1&&flagf[3]==1){
-
+		}else if(HelmInit[0]!=0&&HelmInit[1]!=0&&HelmInit[2]!=0&&HelmInit[3]!=0){
 		flag1=0;
 		}
 
@@ -447,7 +488,9 @@ void StartTransmit(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		buff_len = sprintf(TransmitBuffer,"fg %d %d %d %d\r\n",motor_data[0]->speed_rpm,motor_data[1]->speed_rpm,motor_data[2]->speed_rpm,motor_data[3]->speed_rpm);
+//		buff_len = sprintf(TransmitBuffer,"fg %d %d %d %d\r\n",motor_data[0]->speed_rpm,motor_data[1]->speed_rpm,motor_data[2]->speed_rpm,motor_data[3]->speed_rpm);
+//			HAL_UART_Transmit_DMA(&huart2,(uint8_t *)TransmitBuffer,buff_len);	
+		buff_len = sprintf(TransmitBuffer,"fg %d %d %d %d %d %d %d %d\r\n",motor_data[0]->speed_rpm,motor_data[1]->speed_rpm,motor_data[2]->speed_rpm,motor_data[3]->speed_rpm,(int)rtU.yaw_target_CH1_1,(int)rtU.yaw_target_CH1_2,(int)rtU.yaw_target_CH1_3,(int)rtU.yaw_target_CH1_4);
 		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)TransmitBuffer,buff_len);
 
     osDelay(1);

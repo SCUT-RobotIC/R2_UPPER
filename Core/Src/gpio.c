@@ -101,56 +101,43 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 	if(KEYNUM==KEY1_Pin)
 	{
 
-		if(((motor_data1[0]->circle*8191+motor_data1[0]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[0]==0)
+		if(ANGs.flag[0]==0)
 		{
 			HelmInit[0]=motor_data1[0]->circle*8191+motor_data1[0]->ecd;
 		}
 		ANGs.flag[0]=1;
-		if(((motor_data1[0]->circle*8191+motor_data1[0]->ecd)<(50*36*8191*93/(35*360))))
-		{
-		ANGs.flag[0]=0;
-		}
+
 		delay_us(5000);
 	}
 	
 	if(KEYNUM==KEY2_Pin)
 	{
-		if(((motor_data1[1]->circle*8191+motor_data1[1]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[1]==0)
+		if(ANGs.flag[1]==0)
 		{
 			HelmInit[1]=motor_data1[1]->circle*8191+motor_data1[1]->ecd;
 		}
 		ANGs.flag[1]=1;
-				if(((motor_data1[1]->circle*8191+motor_data1[1]->ecd)<(50*36*8191*93/(35*360))))
-		{
-		ANGs.flag[1]=0;
-		}
-		
+
 		delay_us(5000);
 	}
 		if(KEYNUM==KEY3_Pin)
 	{
-		if(((motor_data1[2]->circle*8191+motor_data1[2]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[2]==0)
+		if(ANGs.flag[2]==0)
 		{
 			HelmInit[2]=motor_data1[2]->circle*8191+motor_data1[0]->ecd;
 		}
 		ANGs.flag[2]=1;
-				if(((motor_data1[2]->circle*8191+motor_data1[2]->ecd)<(50*36*8191*93/(35*360))))
-		{
-		ANGs.flag[2]=0;
-		}
+
 		delay_us(5000);
 	}
 		if(KEYNUM==KEY4_Pin)
 	{
-		if(((motor_data1[3]->circle*8191+motor_data1[3]->ecd)>(50*36*8191*93/(35*360)))&&ANGs.flag[3]==0)
+		if(ANGs.flag[3]==0)
 		{
 			HelmInit[3]=motor_data1[3]->circle*8191+motor_data1[3]->ecd;
 		}
 		ANGs.flag[3]=1;
-				if(((motor_data1[3]->circle*8191+motor_data1[3]->ecd)<(50*36*8191*93/(35*360))))
-		{
-		ANGs.flag[3]=0;
-		}
+
 		delay_us(5000);
 	}
 	

@@ -148,11 +148,12 @@ void CAL_MESSAGE(void)
 			
 			if((B1&0x10)==0&&(DataRe.data[BOT1]&0x10)==0x10)
 			{
-				//按下按键5
+				condition[4]=1;//按下按键5
 			}
 			else if((B1&0x10)==0x10&&(DataRe.data[BOT1]&0x10)==0)
 			{
-				//松开按键5
+				condition[4]=0;
+				conditionCounter[4]=0;//松开按键4//松开按键5
 			}
 			
 			if((B1&0x20)==0&&(DataRe.data[BOT1]&0x20)==0x20)

@@ -282,15 +282,23 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for (;;)
   {
+		
+		if(condition[1]==1)
+			conditionCounter[1]+=1;
 
-				if(HelmInit[0]==0)
-			rtU.yaw_target_CH2_1=5000;
+		if(condition[4]==1)
+			conditionCounter[4]+=1;
+
+		
+		if(conditionCounter[1]>1000){
+			if(HelmInit[0]==0)
+			rtU.yaw_target_CH2_1=-5000;
 				if(HelmInit[1]==0)
-			rtU.yaw_target_CH2_2=5000;
+			rtU.yaw_target_CH2_2=-5000;
 				if(HelmInit[2]==0)
-			rtU.yaw_target_CH2_3=5000;
+			rtU.yaw_target_CH2_3=-5000;
 				if(HelmInit[3]==0)
-			rtU.yaw_target_CH2_4=5000;
+			rtU.yaw_target_CH2_4=-5000;
 		
 	
 		
@@ -318,6 +326,13 @@ void StartDefaultTask(void *argument)
          rtU.yaw_target_CH1_7=AngInit;
 			 }
 		}
+		}
+
+	if(conditionCounter[4]>1000)
+	{
+		__disable_irq(); //关闭所有中断 
+		NVIC_SystemReset(); //复位
+	}
 		
 
     osDelay(1);
@@ -375,23 +390,23 @@ else if(swich[1]==1)
 		}
 
 		
-//		if(swich[1]==1){
-//			factor[3]++;
-//		
-//		if(receivefactor[1]==0)//没接收到就增加标志位
-//			factor[2]++;
-//		if(factor[2]>300){
-//			Vx=0;Vy=0;omega=0;
-//			factor[2]=301;
-//		}//1s没收到就全部停下
-//		if(receivefactor[1]==1)//接收到就标志位置0
-//			factor[2]=0;
-//		
-//		if (factor[3]==1000){
-//			receivefactor[1]=0;//1s更新1次确定为没接收到
-//			factor[3]=0;
-//		}
-//	}
+		if(swich[1]==1){
+			factor[3]++;
+		
+		if(receivefactor[1]==0)//没接收到就增加标志位
+			factor[2]++;
+		if(factor[2]>300){
+			Vx=0;Vy=0;omega=0;
+			factor[2]=301;
+		}//1s没收到就全部停下
+		if(receivefactor[1]==1)//接收到就标志位置0
+			factor[2]=0;
+		
+		if (factor[3]==1000){
+			receivefactor[1]=0;//1s更新1次确定为没接收到
+			factor[3]=0;
+		}
+	}
 		HAL_IWDG_Refresh(&hiwdg);//喂狗
 		
 		/* SPD TEST */

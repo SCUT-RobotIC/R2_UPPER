@@ -43,9 +43,7 @@ double a1, a2, a3, a4, a5, a6;
 //}
 void Receive()
 {
-  //	if(fabs((double)RC.xlast-RC.x)<1000)
   RC.x = (USART2_RX_BUF[2] << 8) | USART2_RX_BUF[1];
-  //	if(fabs((double)RC.ylast-RC.y)<1000)
   RC.y = (USART2_RX_BUF[4] << 8) | USART2_RX_BUF[3];
   RC.theta = (USART2_RX_BUF[6] << 8) | USART2_RX_BUF[5];
 	

@@ -404,14 +404,14 @@
               <FilePath>../Core/Src/main.c</FilePath>
             </File>
             <File>
-              <FileName>freertos.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/freertos.c</FilePath>
-            </File>
-            <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>freertos.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/freertos.c</FilePath>
             </File>
             <File>
               <FileName>can.c</FileName>
@@ -652,6 +652,11 @@
               <FileName>throwball.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\throwball.c</FilePath>
+            </File>
+            <File>
+              <FileName>sbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\sbus.c</FilePath>
             </File>
           </Files>
         </Group>

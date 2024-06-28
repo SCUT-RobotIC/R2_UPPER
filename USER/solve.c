@@ -7,7 +7,7 @@ extern motor_measure_t *motor_data[8];
 uint8_t data[10];
 
 double factors1 = 2;
-double factors2 = 15;
+double factors2 = 30;
 double por=2.5;
 
 double deadband = 50;
@@ -64,16 +64,19 @@ void Reach_TGT()
 	RC.distlast=RC.dist;
   RC.dist = sqrt(pow(TC.y - RC.y, 2) + pow((TC.x - RC.x), 2));
   TC.XYtheta = atan2(TC.y - RC.y, TC.x - RC.x) * 180 / PI;
-  if (fabs((double)RC.dist) < deadband)
+
+  if (fabs((double)RC.dist) >= deadband && fabs((double)RC.dist) < 500)
   {
-    RC.dist = 0;
-  }
-  else if (fabs((double)RC.dist) >= deadband && fabs((double)RC.dist) < 700)
-  {
+		factors1=2;
     RC.dist = 1300 / factors1;
   }
+	else if(fabs((double)RC.dist) >500)
+	{
+		factors1=4;
+	}
   if (fabs((double)RC.dist) > top)
   {
+
     RC.dist = top;
   }
 
@@ -82,9 +85,14 @@ void Reach_TGT()
   {
     RC.RE_theta = 0;
   }
-
+  if (fabs((double)RC.dist) < deadband||fabs(TC.theta - RC.theta)>10)
+  {
+		RC.Vx=0;
+		RC.Vy=0;
+  }else{
   RC.Vx = ((RC.dist+(RC.dist-RC.distlast)*por) * cos(RC.RE_theta * PI / 180)) * factors1;
   RC.Vy = ((RC.dist+(RC.dist-RC.distlast)*por) * sin(RC.RE_theta * PI / 180)) * factors1;
+	}
   //  a1=cos(RC.RE_theta*PI/180);
   //	a2=sin(RC.RE_theta*PI/180);
   //	    if(RC.omega!=0)
@@ -103,18 +111,18 @@ void Reach_TGT()
   else
     RC.omega = 0;
 
-  if (fabs((double)RC.omega) > 1500)
+  if (fabs((double)RC.omega) > 3000)
   {
     if (RC.omega > 0)
-      RC.omega = 1500;
+      RC.omega = 3000;
     else
-      RC.omega = -1500;
+      RC.omega = -3000;
   }
   else if (fabs((double)RC.omega) < 650)
   {
     if (RC.omega > 0)
       RC.omega = 650;
-    else if (RC.omega < -0)
+    else if (RC.omega < 0)
       RC.omega = -650;
     else
       RC.omega = 0;

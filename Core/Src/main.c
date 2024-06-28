@@ -40,6 +40,7 @@
 #include "solve.h"
 #include "logic.h"
 #include "throwball.h"
+#include "sbus.h"
 // #include "R1_Ball_MODEL.h"
 /* USER CODE END Includes */
 
@@ -57,6 +58,14 @@ uint8_t USART2_RX_BUF[USART_REC_LEN];
 uint16_t USART2_RX_STA = 0; 
 uint8_t aRxBuffer2[RXBUFFERSIZE];		  
 UART_HandleTypeDef UART2_Handler; 
+
+
+uint8_t USART6_RX_BUF[USART_REC_LEN]; 
+uint16_t USART6_RX_STA = 0; 
+uint8_t aRxBuffer6[RXBUFFERSIZE];		  
+UART_HandleTypeDef UART6_Handler; 
+
+
 TGT_COOR TC;
 REAL_COOR RC;
 
@@ -95,7 +104,7 @@ double theta[4];
 
 
 DataPacket DataRe;
-int16_t lx,ly,rx,ry,lp,rp;
+int16_t lx,ly,rx,ry,lp,rp,LX,LY,RX,RY;
 uint8_t B1,B2;
 uint8_t Cal_Parity;
 	
@@ -104,6 +113,11 @@ double a,b,c,d=0;
 uint8_t USART_FLAG=0;
 extern double LowAng,HighAng;
 
+
+int ML_CH3 =  1224  ; // left_spd
+int ML_CH4 =  1057 ; // rotate 
+int MR_CH2 =  987 ; //  right_y  max 1400 min 600
+int MR_CH1 =  931 ;  // right_x
 
 
 /* USER CODE END PD */
@@ -170,11 +184,12 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   // Controler Receive Init
   HAL_UART_Receive_DMA(&huart3, (uint8_t *)&DataRe, 1);
   HAL_UART_Receive_DMA(&huart2, aRxBuffer2, 1);
-
+  HAL_UART_Receive_DMA(&huart6, aRxBuffer6, 1);
   // MATLAB Init
   PID_MODEL_initialize();
   HAL_TIM_Base_Start_IT(&htim10);
@@ -391,6 +406,36 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
     break;
   }
+	
+	
+		while (huart->Instance == USART6) //uart2 ?
+	{
+		USART6_RX_BUF[USART6_RX_STA] = aRxBuffer6[0];
+		if (USART6_RX_STA == 0 && USART6_RX_BUF[USART6_RX_STA] != 0x0F) 	
+		{			HAL_UART_Receive_DMA(&huart6,aRxBuffer6,1);	
+		break; //
+			}
+		USART6_RX_STA++;
+			HAL_UART_Receive_DMA(&huart6,aRxBuffer6,1);
+		if (USART6_RX_STA > USART_REC_LEN) USART6_RX_STA = 0;  //
+		if (USART6_RX_BUF[0] == 0x0F && USART6_RX_BUF[24] == 0x00 && USART6_RX_STA == 25)	//�?测包头包尾以及数据包长度
+		{
+			update_sbus(USART6_RX_BUF);
+			if(receivefactor[1]==0){
+			receivefactor[0]=1;
+			}
+			for(int i=0;i<25;i++)
+			  USART6_RX_BUF[i] = 0;//清除数据
+			USART6_RX_STA = 0;
+		}
+		else if(!(USART6_RX_BUF[0] == 0x0F && USART6_RX_BUF[24] == 0x00) && USART6_RX_STA == 25){
+			for(int i=0;i<25;i++)
+			  USART6_RX_BUF[i] = 0;//清除数据
+			USART6_RX_STA = 0;
+		}
+
+		break;
+	}
 }
 
 // 错误回调
@@ -429,6 +474,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim10)
   {
 
+				
+		LY =  SBUS_CH.CH2 - MR_CH2; 
+		RX =  SBUS_CH.CH1 - MR_CH1;
+    LX =  SBUS_CH.CH4 - ML_CH4; 
 		
     assign_output();
     PID_MODEL_step();

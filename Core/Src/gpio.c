@@ -40,6 +40,7 @@ extern double ReductionRatio3508;
 extern double ReductionRatoiGear;
 extern double ElecExac3508;
 extern double HelmInit[4];
+int monitorflag;
 int PhoTheta[2]={105,5};
 PhotogateAng ANGs;
 int AngInit;
@@ -64,6 +65,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pins : PDPin PDPin */
   GPIO_InitStruct.Pin = KEY2_Pin|KEY_HIGH_Pin;
@@ -71,11 +73,17 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PGPin PGPin PGPin PG8 */
-  GPIO_InitStruct.Pin = KEY4_Pin|KEY_LOW_Pin|KEY3_Pin|GPIO_PIN_8;
+  /*Configure GPIO pins : PGPin PGPin PGPin */
+  GPIO_InitStruct.Pin = KEY4_Pin|KEY_LOW_Pin|KEY3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = Monitor_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(Monitor_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = KEY1_Pin;
@@ -155,5 +163,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 		AngInit=motor_data[6]->ecd+motor_data[6]->circle*8191+PhoTheta[1]*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
 	delay_us(5000);
 	}
+	
+	
+	if(KEYNUM==Monitor_Pin)
+	{
+
+		monitorflag=1;
+		rtU.yaw_target_CH1_6=-500;
+		delay_us(5000);
+	}
+	
 }
 /* USER CODE END 2 */

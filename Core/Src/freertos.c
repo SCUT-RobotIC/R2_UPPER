@@ -54,7 +54,7 @@
  * motor_data[7]: ball lift motor
  */
 
-#define Throwfai        100//极坐标定义舵机
+#define Throwfai        100//极坐标定义舵�?
 #define Throwtheta      115 
 double ReductionRatio3508=3591/187;
 double ReductionRatoiGear=143/58;
@@ -105,6 +105,7 @@ double HelmInit[4]={0};
 
 extern double theta[4];
 
+int McKnumFlag=0;
 
 	
 int i[10];
@@ -290,7 +291,8 @@ void StartDefaultTask(void *argument)
 			conditionCounter[4]+=1;
 
 		
-		if(conditionCounter[1]>1000){
+		if(conditionCounter[1]>1000||conditionFlag[1]==1){
+			conditionFlag[1]=1;
 			if(HelmInit[0]==0)
 			rtU.yaw_target_CH2_1=-5000;
 				if(HelmInit[1]==0)
@@ -307,30 +309,30 @@ void StartDefaultTask(void *argument)
 		{
 			rtU.yaw_target_CH1_7=-1000;
 		}
-		if(AngInitFlag==0&&!(AngInit==0))
+		else if(AngInitFlag==0&&AngInit!=0)
 		{
 			AngInitFlag=1;
 			Set_servo(&htim3, TIM_CHANNEL_1, 100, 20000, 20);//fai(极坐标表示的舵机)
 			rtU.yaw_status_CH1_7=2;
-			
-			if(AngInit>0)
-				{
-		for(int i=0;i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508<AngInit;i++)
-					{
-		      rtU.yaw_target_CH1_7= i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
-		      vTaskDelay(100);
-				  }
-			 }
-				else if(AngInit<0)
-				{
+//			
+//			if(AngInit>0)
+//				{
+//		for(int i=0;i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508<AngInit;i++)
+//					{
+//		      rtU.yaw_target_CH1_7= i*ElecExac3508*ReductionRatoiGear*ReductionRatio3508;
+//		      vTaskDelay(100);
+//				  }
+//			 }
+//				else if(AngInit<0)
+//				{
          rtU.yaw_target_CH1_7=AngInit;
-			 }
+//			 }
 		}
 		}
 
 	if(conditionCounter[4]>1000)
 	{
-		__disable_irq(); //关闭所有中断 
+		__disable_irq(); //关闭�?有中�? 
 		NVIC_SystemReset(); //复位
 	}
 		
@@ -356,9 +358,9 @@ void chasfunc(void *argument)
 		
 if(swich[1]==0){
 
-		Vx=(rx)/15;
-		Vy=(ry)/15;
-		omega=(lx)/15;
+		Vx=(rx)/8;
+		Vy=(ry)/8;
+		omega=(lx)/8;
 	if(fabs(Vx)<500)
 		Vx=0;
 	if(fabs(Vy)<500)
@@ -545,11 +547,13 @@ void StartRiseBall(void *argument)
 			
 		if(statue[0]==0)
 		{
+			McKnumFlag=0;
 			rtU.yaw_target_CH1_6=0;
 			rtU.yaw_target_CH1_5=0;
 		}
-		else
+		else if(statue[0]==1&&McKnumFlag==0)
 		{
+			McKnumFlag=1;
 			rtU.yaw_target_CH1_6=3000;//麦轮
 			rtU.yaw_target_CH1_5=9000;
 		}
@@ -576,12 +580,14 @@ void StartRiseBall(void *argument)
 		    
 	}
 		else if (swich[1]==1){
-			if(RC.action==1){
+			if(RC.action==1&&McKnumFlag==0){
+				McKnumFlag=1;
 			rtU.yaw_target_CH1_6=3000;//麦轮
 			rtU.yaw_target_CH1_5=9000;
 
-			}else
+			}else if(RC.action!=1)
 			{
+				McKnumFlag=0;
 		  rtU.yaw_target_CH1_6=0;//麦轮
 			rtU.yaw_target_CH1_5=0;
 			}

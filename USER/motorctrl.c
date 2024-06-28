@@ -22,10 +22,10 @@ for(int i=0;i<4;i++){
 				MotorSignal[i].thetas=-270+(int)MotorSignal[i].thetas/360*360;
 }
 	if(flag==1){
-	while(  (fabs(sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>2400)||
-		      (fabs(sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>2400)||
-	        (fabs(sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult)>2400)||
-	        (fabs(sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult)>2400))
+	while(  (fabs(sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>5000)||
+		      (fabs(sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx-omega*sin(atan(1))),2))*mult)>5000)||
+	        (fabs(sqrt(pow((Vy+omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult)>5000)||
+	        (fabs(sqrt(pow((Vy-omega*cos(atan(1))),2)+pow((Vx+omega*sin(atan(1))),2))*mult)>5000))
 	  {mult=0.98*mult;
 
 		}

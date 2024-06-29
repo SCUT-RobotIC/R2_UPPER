@@ -849,11 +849,12 @@ interwork --depend=robocon2024-scut-r1\startup_stm32f407xx.d -orobocon2024-scut
 ARM Macro Assembler    Page 14 
 
 
--r1\startup_stm32f407xx.o -I../Core/Inc -I.\RTE\_Robocon2024-SCUT-R1 -ID:\keil\
-ARM\CMSIS\5.7.0\CMSIS\Core\Include -ID:\keil\Keil\STM32F4xx_DFP\2.17.0\Drivers\
-CMSIS\Device\ST\STM32F4xx\Include --predefine="__UVISION_VERSION SETA 534" --pr
-edefine="_RTE_ SETA 1" --predefine="STM32F407xx SETA 1" --predefine="_RTE_ SETA
- 1" --list=startup_stm32f407xx.lst startup_stm32f407xx.s
+-r1\startup_stm32f407xx.o -I../Core/Inc -I.\RTE\_Robocon2024-SCUT-R1 -IC:\Users
+\Seattle\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include -IC:\Users\
+Seattle\AppData\Local\Arm\Packs\Keil\STM32F4xx_DFP\2.7.0\Drivers\CMSIS\Device\S
+T\STM32F4xx\Include --predefine="__UVISION_VERSION SETA 537" --predefine="_RTE_
+ SETA 1" --predefine="STM32F407xx SETA 1" --predefine="_RTE_ SETA 1" --list=sta
+rtup_stm32f407xx.lst startup_stm32f407xx.s
 
 
 

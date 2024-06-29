@@ -169,7 +169,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t KEYNUM)
 	{
 
 		monitorflag=1;
-		rtU.yaw_target_CH1_6=-500;
+		rtU.yaw_target_CH1_6=-2000;
 		delay_us(5000);
 	}
 	
